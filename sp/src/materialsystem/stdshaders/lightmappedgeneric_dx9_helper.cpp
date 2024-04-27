@@ -498,7 +498,12 @@ void DrawLightmappedGenericFlashlight_DX9_Internal( CBaseVSShader *pShader, IMat
 			SET_STATIC_VERTEX_SHADER( sdk_lightmappedgeneric_flashlight_vs20 );
 		}
 
+
+
 		unsigned int flags = VERTEX_POSITION | VERTEX_NORMAL;
+
+		flags |= VERTEX_NORMAL; //sets the geometry normal
+
 		if( vars.m_bBump )
 		{
 			flags |= VERTEX_TANGENT_S | VERTEX_TANGENT_T;
@@ -956,6 +961,8 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 				pShader->SetDefaultBlendingShadowState( nAlphaChannelTextureVar, hasBaseTexture );
 
 				unsigned int flags = VERTEX_POSITION;
+
+				flags |= VERTEX_NORMAL; //sets the geometry normal
 
 				// base texture
 				pShaderShadow->EnableTexture( SHADER_SAMPLER0, true );

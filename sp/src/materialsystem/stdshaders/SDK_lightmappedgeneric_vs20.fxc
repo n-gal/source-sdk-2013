@@ -137,7 +137,6 @@ VS_OUTPUT main( const VS_INPUT v )
 		o.tangentSpaceTranspose[1] = worldTangentT;
 		o.tangentSpaceTranspose[2] = worldNormal;
 	#endif
-
 #endif
 
 	float3 worldVertToEyeVector = VSHADER_VECT_SCALE * (cEyePos - worldPos);

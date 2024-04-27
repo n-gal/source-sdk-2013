@@ -203,16 +203,17 @@ struct PS_INPUT
 	HALF4 lightmapTexCoord3			: TEXCOORD3;
 	HALF4 worldPos_projPosZ			: TEXCOORD4;
 	HALF3x3 tangentSpaceTranspose	: TEXCOORD5;
-	// tangentSpaceTranspose		: TEXCOORD6
-	// tangentSpaceTranspose		: TEXCOORD7
 	HALF4 vertexColor				: COLOR;
 	float4 vertexBlendX_fogFactorW	: COLOR1;
+
+	//float3 fragPos : TEXCOORD7;
 
 	// Extra iterators on 360, used in flashlight combo
 #if defined( _X360 ) && FLASHLIGHT
 	float4 flashlightSpacePos		: TEXCOORD8;
 	float4 vProjPos					: TEXCOORD9;
 #endif
+
 };
 
 #if LIGHTING_PREVIEW == 2
@@ -528,18 +529,16 @@ HALF4 main( PS_INPUT i ) : COLOR
 	diffuseLighting *= 2.0*tex2D(WarpLightingSampler,float2(len,0));
 #endif
 
-#if 1 //CUBEMAP || LIGHTING_PREVIEW || ( defined( _X360 ) && FLASHLIGHT )
 	float3x3 tangentSpaceTranspose = i.tangentSpaceTranspose;
 	
-	float3 worldSpaceNormal = mul( vNormal.xyz, i.tangentSpaceTranspose );
-#endif
+	float3 worldSpaceNormal = mul(vNormal.xyz, i.tangentSpaceTranspose);
 
 	float3 worldVertToEyeVector = g_EyePos - i.worldPos_projPosZ.xyz;
+	float3 vEyeDir = normalize(worldVertToEyeVector);
 
 #if FOGTYPE == 2 || FLASHLIGHT != 0
 	float3 diffuseComponent = albedo.xyz * diffuseLighting;
 #else
-	float3 vEyeDir = normalize( worldVertToEyeVector );
 	float flFresnelMinlight = saturate( dot( worldSpaceNormal, vEyeDir ) );
 
 	float3 diffuseComponent = albedo.xyz * lerp( diffuseLighting, 1, g_fMinLighting * flFresnelMinlight );
@@ -626,8 +625,28 @@ HALF4 main( PS_INPUT i ) : COLOR
 		specularLighting *= fresnel;
 	}
 #endif
+	
+	float specularStrength = 0.5;
 
-	HALF3 result = diffuseComponent + specularLighting;
+	float3 norm = i.tangentSpaceTranspose[2];
+
+	float3 lightPos = { 0, 0, 20 };
+	float3 lightColor = { 1, 0, 0 };
+
+	// diffuse lighting
+	float3 lightDir = normalize(lightPos - i.worldPos_projPosZ.xyz);
+	float diff = max(dot(norm, lightDir), 0.0);
+	float3 diffuse = diff * lightColor;
+
+	// specular lighting
+	float3 reflectDir = reflect(-lightDir, norm);
+	float spec = pow(max(dot(vEyeDir, reflectDir), 0.0), 5);
+	float3 specular = (spec * specularStrength) * lightColor;
+
+	float lightDistance = distance(i.worldPos_projPosZ.xyz, lightPos);
+	float attenuation = 1.0 / (lightDistance);
+
+	HALF3 result = (diffuse + specular) * attenuation;
 	
 #if LIGHTING_PREVIEW
 	worldSpaceNormal = mul( vNormal, tangentSpaceTranspose );
