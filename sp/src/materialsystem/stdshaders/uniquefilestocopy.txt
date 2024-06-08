@@ -1,4 +1,5 @@
-..\..\dx9sdk\utilities\dx_proxy.dll 
+..\..\devtools\bin\d3dx9_33.dll 
+..\..\dx10sdk\utilities\dx9_30\dx_proxy.dll 
 C:\PROGRA~2\Steam\STEAMA~1\common\SOURCE~2\bin\shadercompile.exe 
 C:\PROGRA~2\Steam\STEAMA~1\common\SOURCE~2\bin\shadercompile_dll.dll 
 C:\PROGRA~2\Steam\STEAMA~1\common\SOURCE~2\bin\tier0.dll 
@@ -10,4 +11,5 @@ common_hlsl_cpp_consts.h
 common_lightmappedgeneric_fxc.h
 common_pragmas.h
 common_ps_fxc.h
+common_vertexlitgeneric_dx9.h
 lightmappedgeneric_ps2_3_x.h

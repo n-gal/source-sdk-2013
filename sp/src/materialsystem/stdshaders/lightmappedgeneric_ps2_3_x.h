@@ -129,6 +129,8 @@ const float4x4 obbMatrix					: register(c22); //through c25
 const HALF g_BlendInverted					: register(c21);
 #endif
 
+// Fresnel function
+float fresnelSchlick(float cosTheta, float refIndex);
 
 sampler BaseTextureSampler		: register( s0 );
 sampler LightmapSampler			: register( s1 );
@@ -536,10 +538,12 @@ HALF4 main( PS_INPUT i ) : COLOR
 	float3 worldVertToEyeVector = g_EyePos - i.worldPos_projPosZ.xyz;
 	float3 vEyeDir = normalize(worldVertToEyeVector);
 
+	float flFresnelMinlight = saturate( dot( worldSpaceNormal, vEyeDir ) );
+
 #if FOGTYPE == 2 || FLASHLIGHT != 0
 	float3 diffuseComponent = albedo.xyz * diffuseLighting;
 #else
-	float flFresnelMinlight = saturate( dot( worldSpaceNormal, vEyeDir ) );
+
 
 	float3 diffuseComponent = albedo.xyz * lerp( diffuseLighting, 1, g_fMinLighting * flFresnelMinlight );
 #endif
@@ -582,18 +586,19 @@ HALF4 main( PS_INPUT i ) : COLOR
 		diffuseComponent = lerp( diffuseComponent, selfIllumComponent, blendedAlpha ); // Blixibon - Replaced baseColor.a with blendedAlpha
 	}
 
+	//float3 worldVertToEyeVector = g_EyePos - i.worldPos_projPosZ.xyz;
+	float3 reflectVect = CalcReflectionVectorUnnormalized( worldSpaceNormal, worldVertToEyeVector );
+
+	// Calc Fresnel factor
+	half3 eyeVect = normalize(worldVertToEyeVector);
+	HALF fresnel = 1.0 - dot( worldSpaceNormal, eyeVect );
+	fresnel = pow( fresnel, 5.0 );
+	fresnel = fresnel * g_OneMinusFresnelReflection + g_FresnelReflection;
+
 	HALF3 specularLighting = HALF3( 0.0f, 0.0f, 0.0f );
 #if CUBEMAP
 	if( bCubemap )
 	{
-		//float3 worldVertToEyeVector = g_EyePos - i.worldPos_projPosZ.xyz;
-		float3 reflectVect = CalcReflectionVectorUnnormalized( worldSpaceNormal, worldVertToEyeVector );
-
-		// Calc Fresnel factor
-		half3 eyeVect = normalize(worldVertToEyeVector);
-		HALF fresnel = 1.0 - dot( worldSpaceNormal, eyeVect );
-		fresnel = pow( fresnel, 5.0 );
-		fresnel = fresnel * g_OneMinusFresnelReflection + g_FresnelReflection;
 		
 #if PARALLAXCORRECT
 		//Parallax correction (2_0b and beyond)
@@ -626,27 +631,31 @@ HALF4 main( PS_INPUT i ) : COLOR
 	}
 #endif
 	
-	float specularStrength = 0.5;
+	float specularStrength = 0.7;
 
 	float3 norm = i.tangentSpaceTranspose[2];
 
-	float3 lightPos = { 0, 0, 20 };
-	float3 lightColor = { 1, 0, 0 };
+	float3 lightPos = { 0, 0, 0 };
+	float3 lightColor = { 0, 0.2, 1 };
 
+	float cosTheta = dot(vEyeDir, i.tangentSpaceTranspose[2]);
+	float fres = fresnelSchlick(cosTheta, 1);
 	// diffuse lighting
 	float3 lightDir = normalize(lightPos - i.worldPos_projPosZ.xyz);
 	float diff = max(dot(norm, lightDir), 0.0);
 	float3 diffuse = diff * lightColor;
+	diffuse = diffuse * albedo.xyz;
 
 	// specular lighting
 	float3 reflectDir = reflect(-lightDir, norm);
-	float spec = pow(max(dot(vEyeDir, reflectDir), 0.0), 5);
+	float spec = pow(max(dot(vEyeDir, reflectDir), 0.0), 50);
 	float3 specular = (spec * specularStrength) * lightColor;
+	specular = specular * fres;
 
 	float lightDistance = distance(i.worldPos_projPosZ.xyz, lightPos);
-	float attenuation = 1.0 / (lightDistance);
+	float attenuation = 1.0 / (lightDistance/50);
 
-	HALF3 result = (diffuse + specular) * attenuation;
+	HALF3 result = diffuseComponent + specularLighting + ((diffuse + specular) * attenuation);
 	
 #if LIGHTING_PREVIEW
 	worldSpaceNormal = mul( vNormal, tangentSpaceTranspose );
@@ -682,3 +691,10 @@ HALF4 main( PS_INPUT i ) : COLOR
 #endif
 }
  
+float fresnelSchlick(float cosTheta, float refIndex)
+{
+	float r0 = (1.0 - refIndex) / (1.0 + refIndex);
+	r0 = r0 * r0;
+	r0 = r0 + (1.0 - r0) * pow(1.0 - cosTheta, 5.0);
+	return clamp(r0, 0, 1);
+}
