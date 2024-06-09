@@ -1,12 +1,3 @@
-SDK_lightmappedgeneric_ps20b.fxc
-common_vertexlitgeneric_dx9.h
-common_lightmappedgeneric_fxc.h
-common_pragmas.h
-common_fxc.h
-common_ps_fxc.h
-common_hlsl_cpp_consts.h
-common_flashlight_fxc.h
-lightmappedgeneric_ps2_3_x.h
 ..\..\devtools\bin\d3dx9_33.dll 
 ..\..\dx10sdk\utilities\dx9_30\dx_proxy.dll 
 C:\PROGRA~2\Steam\STEAMA~1\common\SOURCE~2\bin\shadercompile.exe 
