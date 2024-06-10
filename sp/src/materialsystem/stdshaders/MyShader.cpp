@@ -110,7 +110,7 @@ SHADER_DRAW
 		// ----------------------------------------------------------------------------
 		DYNAMIC_STATE
 	{
-		pShaderAPI->BindStandardTexture(SHADER_SAMPLER0, TEXTURE_FRAME_BUFFER_FULL_DEPTH);
+		pShaderAPI->BindStandardTexture(SHADER_SAMPLER0, TEXTURE_FRAME_BUFFER_FULL_TEXTURE_0);
 		// Use the sdk_screenspaceeffect_vs20 vertex shader.
 		DECLARE_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs20);
 		SET_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs20);

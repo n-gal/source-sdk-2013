@@ -36,8 +36,14 @@ struct PS_INPUT
 float4 main( PS_INPUT i ) : COLOR
 {
     float4 color = tex2D(frameSampler, i.texCoord);
-	float density = 5;
 	float depth = color.w;
-	float fogResult = pow(2, pow((depth * density),2));
-	return color + float4(fogResult, fogResult, fogResult, 1);
+	color = pow(color, 1.0/2.1);
+
+	return color ;
+
 }
+
+
+	//float density = 0.7;
+	//float fog = (pow((depth * density),2));
+	//float fogResult = (1 - pow(2, -fog)) * 1.5;
