@@ -8,6 +8,7 @@
 // Includes
 // ----------------------------------------------------------------------------
 
+
 // Must include this. Contains a bunch of macro definitions along with the
 // declaration of CBaseShader.
 #include "BaseVSShader.h"
@@ -111,6 +112,12 @@ SHADER_DRAW
 		DYNAMIC_STATE
 	{
 		pShaderAPI->BindStandardTexture(SHADER_SAMPLER0, TEXTURE_FRAME_BUFFER_FULL_TEXTURE_0);
+
+		//float vEyePos[4];
+		//pShaderAPI->GetWorldSpaceCameraPosition(vEyePos);
+		//vEyePos[3] = 0.0f;
+		//pShaderAPI->SetVertexShaderConstant(VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, vEyePos);
+
 		// Use the sdk_screenspaceeffect_vs20 vertex shader.
 		DECLARE_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs20);
 		SET_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs20);
@@ -126,8 +133,35 @@ SHADER_DRAW
 			DECLARE_DYNAMIC_PIXEL_SHADER(my_pixelshader_ps20);
 			SET_DYNAMIC_PIXEL_SHADER(my_pixelshader_ps20);
 		}
+
+
+		float vEyePos[4];
+		pShaderAPI->GetWorldSpaceCameraPosition(vEyePos);
+		pShaderAPI->SetPixelShaderConstant(5, vEyePos, 1);
+		Msg("Camera Position: %f, %f, %f\n", vEyePos[0], vEyePos[1], vEyePos[2]);
+
+		// Obtain the view matrix
+		//VMatrix viewMatrix;
+		//pShaderAPI->GetMatrix(MATERIAL_VIEW, viewMatrix.m[0]);
+		// Compute the inverse of the view matrix
+		//VMatrix invViewMatrix;
+		//invViewMatrix.Identity();
+		//invViewMatrix = viewMatrix.InverseTR();
+
+		//Msg("View Matrix:\n");
+		//for (int i = 0; i < 4; ++i)
+		//{
+		//	Msg("%f %f %f %f\n", viewMatrix[i][0], viewMatrix[i][1], viewMatrix[i][2], viewMatrix[i][3]);
+		//}
+
+		// Set the inverse view matrix as a pixel shader constant
+		//pShaderAPI->SetPixelShaderConstant(0, invViewMatrix.Base(), 4); // Assuming constant register 0
+
+		CBaseVSShader *pShader = new CBaseVSShader();
+		pShader->LoadViewMatrixIntoPixelShaderConstant(0);
+		delete pShader;
+
 	}
-	//					BindTexture( SHADER_SAMPLER0, BASETEXTURE, FRAME );
 
 		// NEVER FORGET THIS CALL! This is what actually
 		// draws your shader!

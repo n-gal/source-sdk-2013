@@ -1,8 +1,12 @@
 // ------------------------------------------------------------
 // MY_PIXELSHADER_PS2X.FXC
 //
-// This file implements an extremely simple pixel shader for
-// the Source Engine.
+// This file implements an volumetric fog post processing effect
+// for the source engine.
+//
+// Done with the help of:
+// https://developer.valvesoftware.com/wiki/Source_SDK_2013:_Your_First_Shader
+// https://developer.valvesoftware.com/wiki/Source_SDK_2013:_Your_Second_Shader
 // ------------------------------------------------------------
 
 // ------------------------------------------------------------
@@ -22,7 +26,10 @@
 // sample from.
 // ------------------------------------------------------------
 
-sampler frameSampler : register(s0);
+float4x4 g_mInvViewMatrix			:	register(c0);
+const float4 g_vCameraPosition		: register( c5 );
+
+sampler frameSampler						: register(s0);
 
 struct PS_INPUT
 {
@@ -30,20 +37,141 @@ struct PS_INPUT
 };
 
 // ------------------------------------------------------------
-// This is the main entry point to our pixel shader. We'll
-// return the color red as an output.
+// Declare constants
 // ------------------------------------------------------------
-float4 main( PS_INPUT i ) : COLOR
+
+float bb_min = 0;
+float bb_max = 70000;
+
+// ------------------------------------------------------------
+// PURPOSE: 
+//			Get the world space camera direction
+//
+// INPUTS: 
+//			-UV coordinates
+//			-Size of the screen in pixels
+//			-Inverse view matrix, used to translate from view space to world space
+//	
+// OUTPUTS:
+//			-World space camera direction
+// ------------------------------------------------------------
+
+float3 GetCameraDirection(float2 uv, float2 viewportSize, float4x4 invViewMatrix)
 {
-    float4 color = tex2D(frameSampler, i.texCoord);
-	float depth = color.w;
-	color = pow(color, 1.0/2.1);
+  // so the original UV is typically in screen space, which is the final space there is.
+  // refresher on spaces: object -> world -> camera/view -> clip/ndc -> screen
+  // the ray direction is on the world space, so we need to transform this UV into world space.
+  // to do that, we first change it to NDC space which normalizes the UV to [-1,1] range
 
-	return color ;
-
+	float2 normalizedUv = uv * 2 - 1;
+	float3 dirNDC = float3(normalizedUv.x, normalizedUv.y, 1);
+ 
+ 	float2 resolution = 1 / viewportSize;
+ 	float aspectRatio = resolution.y / resolution.x;
+ 	float tanHalfFOV = tan(radians(90) * 0.5);
+ 
+ 	// we then construct the camera/view space by taking into account the aspect ratio and FOV.
+ 	float3 dirView = normalize(float3(normalizedUv.x * aspectRatio * tanHalfFOV, normalizedUv.y * tanHalfFOV, -1));
+ 
+ 	// once we do that, we can transform further to world space usingn the inverse view matrix.
+ 	float4 dirWorld = mul(invViewMatrix, float4(dirView, 0.0));
+ 
+ 	// return the normalized version of it
+ 	return normalize(dirWorld.xyz);
 }
 
+// ------------------------------------------------------------
+// PURPOSE: 
+//			Get the distance to and through a volume of a ray
+//
+// INPUTS: 
+//			-Position of the center of the volume
+//			-Origin of the ray in world space
+//			-Direction of the ray in world space
+//	
+// OUTPUTS:
+//			-X: Distance to the volume
+//			-Y: Distance through the volume
+// ------------------------------------------------------------
 
-	//float density = 0.7;
-	//float fog = (pow((depth * density),2));
-	//float fogResult = (1 - pow(2, -fog)) * 1.5;
+float2 RayBoxIntersect(float3 centre, float3 ro, float3 rd) {
+	float3 t0 = (bb_min + centre - ro) / rd;
+	float3 t1 = (bb_max + centre - ro) / rd;
+	float3 tmin = min(t0, t1);
+	float3 tmax = max(t0, t1);
+ 
+	float dst_a = max(max(tmin.x, tmin.y), tmin.z);
+	float dst_b = min(tmax.x, min(tmax.y, tmax.z));
+ 
+	float dstToBox = max(0., dst_a);
+	float dstThroughBox = max(0., dst_b - dstToBox);
+ 
+	return float2(dstToBox, dstThroughBox);
+}
+
+// ------------------------------------------------------------
+// Main pixel shader
+// ------------------------------------------------------------
+
+float4 main( PS_INPUT i ) : COLOR
+{
+	
+	//------------------------------------------
+	// Get base values
+	//------------------------------------------
+
+	float2 screenSize = float2(1920,1080);
+    float4 color = tex2D(frameSampler, i.texCoord);
+	float3 volumePos = float3(0,0,0);
+	float opacity_multiplier = 1;
+	float3 fogColor = float3(1,1,1);
+	float density = 70;
+
+	// The depth buffer is stored in the alpha channel of the frame buffer
+	float depth = color.w;
+	// We do this to keep the same Gamma with and without the effect, otherwise it would be darker
+	color = pow(color, 1.0/2.1);
+
+	//------------------------------------------
+	// Get temporary placeholder values
+	//------------------------------------------
+
+	float3 cameraPosition = float3(0,0,0);
+
+	float4x4 identityMatrix = float4x4(
+	1.0, 0.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0
+	);
+
+	//------------------------------------------
+	// Cast ray through volume
+	//------------------------------------------
+
+	float3 rayOrigin = g_vCameraPosition.xyz;
+	float3 rayDir = normalize(GetCameraDirection(i.texCoord, screenSize, g_mInvViewMatrix));
+	float2 hitInfo = RayBoxIntersect(volumePos, rayOrigin, rayDir);
+	float dstToVolume = hitInfo.x;
+	float dstThroughVolume = hitInfo.y;	
+	
+	//float dstThroughVolume = min(hitInfo.y, depth - dstToVolume);									// not using this yet to test the volume itself independently of the scene depth!!!! depth might need to be replaced with linearDepth !!!!
+
+	//------------------------------------------
+	// Calculate Volumetric fog result
+	//------------------------------------------
+
+	float fogBw = (dstThroughVolume * opacity_multiplier) / (density * 2.0);
+	float3 fogResult = fogBw * fogColor;
+
+	//------------------------------------------
+	// Calculate final result
+	//------------------------------------------
+
+	// We do this to make it so we can blend fog colors in whilst keeping the fog opaque when density is at maximum
+	float3 fogBlendSceneColor = (color.xyz * max(0.0,(1.0 - fogBw)));
+	float3 result = fogBlendSceneColor + fogResult;
+
+
+	return float4(fogBw, fogBw, fogBw, 1);
+}

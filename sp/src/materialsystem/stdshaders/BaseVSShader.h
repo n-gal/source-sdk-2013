@@ -129,6 +129,9 @@ public:
 	// Loads the view matrix into vertex shader constants
 	void LoadViewMatrixIntoVertexShaderConstant( int vertexReg );
 
+	// Loads the view matrix into pixel shader constants
+	void LoadViewMatrixIntoPixelShaderConstant(int pixelReg);
+
 	// Loads the projection matrix into vertex shader constants
 	void LoadProjectionMatrixIntoVertexShaderConstant( int vertexReg );
 

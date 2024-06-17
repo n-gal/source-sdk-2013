@@ -502,7 +502,7 @@ void CBaseVSShader::SetVertexShaderMatrix4x4( int vertexReg, int matrixVar )
 
 
 //-----------------------------------------------------------------------------
-// Loads the view matrix into pixel shader constants
+// Loads the view matrix into vertex shader constants
 //-----------------------------------------------------------------------------
 void CBaseVSShader::LoadViewMatrixIntoVertexShaderConstant( int vertexReg )
 {
@@ -513,9 +513,27 @@ void CBaseVSShader::LoadViewMatrixIntoVertexShaderConstant( int vertexReg )
 	s_pShaderAPI->SetVertexShaderConstant( vertexReg, transpose.m[0], 3 );
 }
 
+//-----------------------------------------------------------------------------
+// Loads the view matrix into pixel shader constants
+//-----------------------------------------------------------------------------
+void CBaseVSShader::LoadViewMatrixIntoPixelShaderConstant(int pixelReg)
+{
+	VMatrix mat, transpose;
+	s_pShaderAPI->GetMatrix(MATERIAL_VIEW, mat.m[0]);
+
+	MatrixTranspose(mat, transpose);
+	s_pShaderAPI->SetPixelShaderConstant(pixelReg, transpose.m[0], 3);
+
+	Msg("View Matrix:\n");
+	for (int i = 0; i < 4; ++i)
+	{
+		Msg("%f %f %f %f\n", transpose[i][0], transpose[i][1], transpose[i][2], transpose[i][3]);
+	}
+}
+
 
 //-----------------------------------------------------------------------------
-// Loads the projection matrix into pixel shader constants
+// Loads the projection matrix into vertex shader constants
 //-----------------------------------------------------------------------------
 void CBaseVSShader::LoadProjectionMatrixIntoVertexShaderConstant( int vertexReg )
 {
@@ -528,7 +546,7 @@ void CBaseVSShader::LoadProjectionMatrixIntoVertexShaderConstant( int vertexReg 
 
 
 //-----------------------------------------------------------------------------
-// Loads the projection matrix into pixel shader constants
+// Loads the projection matrix into vertex shader constants
 //-----------------------------------------------------------------------------
 void CBaseVSShader::LoadModelViewMatrixIntoVertexShaderConstant( int vertexReg )
 {
