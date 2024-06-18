@@ -27,7 +27,7 @@
 // This macro defines the start of the shader. Effectively, every shader is
 // 
 // ----------------------------------------------------------------------------
-BEGIN_SHADER(MyShader, "Help for my shader.")
+BEGIN_VS_SHADER(MyShader, "Help for my shader.")
 
 // ----------------------------------------------------------------------------
 // This block is where you'd define inputs that users can feed to your
@@ -134,34 +134,30 @@ SHADER_DRAW
 			SET_DYNAMIC_PIXEL_SHADER(my_pixelshader_ps20);
 		}
 
-
-		float vEyePos[4];
+		float vEyePos[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		pShaderAPI->GetWorldSpaceCameraPosition(vEyePos);
 		pShaderAPI->SetPixelShaderConstant(5, vEyePos, 1);
-		Msg("Camera Position: %f, %f, %f\n", vEyePos[0], vEyePos[1], vEyePos[2]);
+		//Msg("Camera Position: %f, %f, %f\n", vEyePos[0], vEyePos[1], vEyePos[2]);
 
 		// Obtain the view matrix
-		//VMatrix viewMatrix;
-		//pShaderAPI->GetMatrix(MATERIAL_VIEW, viewMatrix.m[0]);
+		VMatrix viewMatrix;
+		pShaderAPI->GetMatrix(MATERIAL_VIEW, viewMatrix.m[0]);
 		// Compute the inverse of the view matrix
-		//VMatrix invViewMatrix;
-		//invViewMatrix.Identity();
-		//invViewMatrix = viewMatrix.InverseTR();
-
-		//Msg("View Matrix:\n");
-		//for (int i = 0; i < 4; ++i)
-		//{
-		//	Msg("%f %f %f %f\n", viewMatrix[i][0], viewMatrix[i][1], viewMatrix[i][2], viewMatrix[i][3]);
-		//}
-
+		VMatrix invViewMatrix;
+		invViewMatrix.Identity();
+		invViewMatrix = viewMatrix.InverseTR();
+		
+		Msg("View Matrix:\n");
+		for (int i = 0; i < 4; ++i)
+		{
+			Msg("%f %f %f %f\n", viewMatrix[i][0], viewMatrix[i][1], viewMatrix[i][2], viewMatrix[i][3]);
+		}
+		
 		// Set the inverse view matrix as a pixel shader constant
-		//pShaderAPI->SetPixelShaderConstant(0, invViewMatrix.Base(), 4); // Assuming constant register 0
-
-		CBaseVSShader *pShader = new CBaseVSShader();
-		pShader->LoadViewMatrixIntoPixelShaderConstant(0);
-		delete pShader;
-
+		pShaderAPI->SetPixelShaderConstant(0, invViewMatrix.Base(), 4); // Assuming constant register 0
 	}
+
+
 
 		// NEVER FORGET THIS CALL! This is what actually
 		// draws your shader!

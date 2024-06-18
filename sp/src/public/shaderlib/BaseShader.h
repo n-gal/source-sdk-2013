@@ -100,6 +100,7 @@ public:
 
 	// Methods inherited from IShader
 	virtual char const* GetFallbackShader( IMaterialVar** params ) const { return 0; }
+
 	virtual int GetNumParams( ) const;
 	virtual char const* GetParamName( int paramIndex ) const;
 	virtual char const* GetParamHelp( int paramIndex ) const;

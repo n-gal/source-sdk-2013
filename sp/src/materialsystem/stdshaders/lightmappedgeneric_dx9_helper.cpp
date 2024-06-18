@@ -725,7 +725,7 @@ void DrawLightmappedGenericFlashlight_DX9_Internal( CBaseVSShader *pShader, IMat
 		pShaderAPI->GetWorldSpaceCameraPosition( vEyePos_SpecExponent );
 		vEyePos_SpecExponent[3] = params[vars.m_nPhongExponent]->GetFloatValue();
 		pShaderAPI->SetPixelShaderConstant( PSREG_EYEPOS_SPEC_EXPONENT, vEyePos_SpecExponent, 1 );
-
+		
 		if ( g_pHardwareConfig->SupportsShaderModel_3_0() )
 		{
 			DECLARE_DYNAMIC_PIXEL_SHADER( sdk_lightmappedgeneric_flashlight_ps30 );
