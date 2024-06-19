@@ -8,4 +8,4 @@ class IShaderDynamicAPI;
 class IShaderShadow;
 
 
-void DrawVolumetricShader(CBaseVSShader *pShader, IMaterialVar** params, IShaderDynamicAPI *pShaderAPI, IShaderShadow* pShaderShadow);
+ void DrawVolumetricShader(CBaseVSShader *pShader, IMaterialVar** params, IShaderDynamicAPI *pShaderAPI, IShaderShadow* pShaderShadow);

@@ -39,6 +39,9 @@ BEGIN_SHADER_PARAMS
 END_SHADER_PARAMS
 
 
+SHADER_INIT_PARAMS()
+{
+}
 
 // ----------------------------------------------------------------------------
 // This is the shader initialization block. This disgusting macro defines
@@ -46,7 +49,6 @@ END_SHADER_PARAMS
 // ----------------------------------------------------------------------------
 SHADER_INIT
 {
-
 }
 
 // ----------------------------------------------------------------------------
@@ -78,7 +80,6 @@ SHADER_FALLBACK
 // ----------------------------------------------------------------------------
 SHADER_DRAW
 {
-
 	DrawVolumetricShader(this, params, pShaderAPI, pShaderShadow);
 }
 

@@ -50,30 +50,18 @@ void DrawInternalVolumetricShader(CBaseVSShader *pShader, IMaterialVar** params,
 		// ----------------------------------------------------------------------------
 		DYNAMIC_STATE
 	{
+		// Send the frame and depth buffer to the pixel shader at register s0
 		pShaderAPI->BindStandardTexture(SHADER_SAMPLER0, TEXTURE_FRAME_BUFFER_FULL_TEXTURE_0);
 
-		// Use the sdk_screenspaceeffect_vs20 vertex shader.
-		DECLARE_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs20);
-		SET_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs20);
-
-		// Use our custom pixel shader.
-		if (g_pHardwareConfig->SupportsPixelShaders_2_b())
-		{
-			DECLARE_DYNAMIC_PIXEL_SHADER(my_pixelshader_ps20b);
-			SET_DYNAMIC_PIXEL_SHADER(my_pixelshader_ps20b);
-		}
-		else
-		{
-			DECLARE_DYNAMIC_PIXEL_SHADER(my_pixelshader_ps20);
-			SET_DYNAMIC_PIXEL_SHADER(my_pixelshader_ps20);
-		}
-
+		// Get the world space camera position
 		float vEyePos[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		pShaderAPI->GetWorldSpaceCameraPosition(vEyePos);
+
+		// Send the world space camera position to the pixel shader at register c5
 		pShaderAPI->SetPixelShaderConstant(5, vEyePos, 1);
 		Msg("Camera Position: %f, %f, %f\n", vEyePos[0], vEyePos[1], vEyePos[2]);
 
-		// Obtain the view matrix
+		// Get the view matrix
 		VMatrix viewMatrix;
 		pShaderAPI->GetMatrix(MATERIAL_VIEW, viewMatrix.m[0]);
 
@@ -88,14 +76,27 @@ void DrawInternalVolumetricShader(CBaseVSShader *pShader, IMaterialVar** params,
 			Msg("%f %f %f %f\n", viewMatrix[i][0], viewMatrix[i][1], viewMatrix[i][2], viewMatrix[i][3]);
 		}
 
-		// Set the inverse view matrix as a pixel shader constant
-		pShaderAPI->SetPixelShaderConstant(0, invViewMatrix.Base(), 4); 
+		// Send the inverse view matrix to the pixel shader at register c0
+		pShaderAPI->SetPixelShaderConstant(0, invViewMatrix.Base(), 4);
+
+
+		// Use the sdk_screenspaceeffect_vs20 vertex shader
+		DECLARE_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs20);
+		SET_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs20);
+
+		// Use the custom shader
+		if (g_pHardwareConfig->SupportsPixelShaders_2_b())
+		{
+			DECLARE_DYNAMIC_PIXEL_SHADER(my_pixelshader_ps20b);
+			SET_DYNAMIC_PIXEL_SHADER(my_pixelshader_ps20b);
+		}
+		else
+		{
+			DECLARE_DYNAMIC_PIXEL_SHADER(my_pixelshader_ps20);
+			SET_DYNAMIC_PIXEL_SHADER(my_pixelshader_ps20);
+		}
 	}
-
-
-
-		// NEVER FORGET THIS CALL! This is what actually
-		// draws your shader!
+		// draws the shader
 	pShader->Draw();
 }
 
