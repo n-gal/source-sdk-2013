@@ -25,15 +25,6 @@
 
 #include "tier0/memdbgon.h"
 
-ConVar mat_disable_lightwarp("mat_disable_lightwarp", "0");
-ConVar mat_disable_fancy_blending("mat_disable_fancy_blending", "0");
-ConVar mat_fullbright("mat_fullbright", "0", FCVAR_CHEAT);
-ConVar my_mat_fullbright("mat_fullbright", "0", FCVAR_CHEAT);
-
-ConVar mat_enable_lightmapped_phong("mat_enable_lightmapped_phong", "1", FCVAR_ARCHIVE, "If 1, allow phong on world brushes. If 0, disallow. mat_force_lightmapped_phong does not work if this value is 0.");
-ConVar mat_force_lightmapped_phong("mat_force_lightmapped_phong", "0", FCVAR_CHEAT, "Forces the use of phong on all LightmappedAdv textures, regardless of setting in VMT.");
-ConVar mat_force_lightmapped_phong_boost("mat_force_lightmapped_phong_boost", "5.0", FCVAR_CHEAT);
-ConVar mat_force_lightmapped_phong_exp("mat_force_lightmapped_phong_exp", "50.0", FCVAR_CHEAT);
 
 class CLightmappedGeneric_DX9_Context : public CBasePerMaterialContextData
 {
@@ -1598,6 +1589,10 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 		CCommandBufferBuilder< CFixedCommandStorageBuffer< 1000 > > DynamicCmdsOut;
 		DynamicCmdsOut.Call(pContextData->m_pStaticCmds);
 		DynamicCmdsOut.Call(pContextData->m_SemiStaticCmdsOut.Base());
+
+		float vEyePos_SpecExponent[4];
+		pShaderAPI->GetWorldSpaceCameraPosition(vEyePos_SpecExponent);
+		Msg("Camera Position: %f, %f, %f\n", vEyePos_SpecExponent[0], vEyePos_SpecExponent[1], vEyePos_SpecExponent[2]);
 
 		bool hasEnvmap = params[info.m_nEnvmap]->IsTexture();
 
